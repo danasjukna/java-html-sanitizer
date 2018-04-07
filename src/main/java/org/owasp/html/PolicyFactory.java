@@ -35,6 +35,8 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 
+import org.owasp.html.HtmlSanitizer.Policy;
+
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -58,6 +60,8 @@ public final class PolicyFactory
   private final ImmutableSet<String> textContainers;
   private final HtmlStreamEventProcessor preprocessor;
   private final HtmlStreamEventProcessor postprocessor;
+  
+  private CharReplacements charReplacements = CharReplacements.DEFAULT;
 
   PolicyFactory(
       ImmutableMap<String, ElementAndAttributePolicies> policies,
@@ -72,6 +76,11 @@ public final class PolicyFactory
     this.postprocessor = postprocessor;
   }
 
+  public PolicyFactory setCharReplacements(CharReplacements cr){
+	  this.charReplacements = cr;
+	  return this;
+  }
+  
   /** Produces a sanitizer that emits tokens to {@code out}. */
   public HtmlSanitizer.Policy apply(@Nonnull HtmlStreamEventReceiver out) {
     return new ElementAndAttributePolicyBasedSanitizerPolicy(
@@ -89,18 +98,16 @@ public final class PolicyFactory
    *     with notifications.  This can be used to let the listener know from
    *     which connection or request the questionable HTML was received.
    */
-  public <CTX> HtmlSanitizer.Policy apply(
-      HtmlStreamEventReceiver out, @Nullable HtmlChangeListener<CTX> listener,
-      @Nullable CTX context) {
-    if (listener == null) {
-      return apply(out);
-    } else {
-      HtmlChangeReporter<CTX> r = new HtmlChangeReporter<CTX>(
-          out, listener, context);
-      r.setPolicy(apply(r.getWrappedRenderer()));
-      return r.getWrappedPolicy();
-    }
-  }
+	public <CTX> HtmlSanitizer.Policy apply(HtmlStreamEventReceiver out, 
+											@Nullable HtmlChangeListener<CTX> listener,
+											@Nullable CTX context) {
+		if (listener == null)
+			return apply(out);
+
+		HtmlChangeReporter<CTX> r = new HtmlChangeReporter<CTX>(out, listener, context);
+		r.setPolicy(apply(r.getWrappedRenderer()));
+		return r.getWrappedPolicy();
+	}
 
   /** A convenience function that sanitizes a string of HTML. */
   public String sanitize(@Nullable String html) {
@@ -119,18 +126,22 @@ public final class PolicyFactory
    *     which connection or request the questionable HTML was received.
    * @return a string of HTML that complies with this factory's policy.
    */
-  public <CTX> String sanitize(
-      @Nullable String html,
-      @Nullable HtmlChangeListener<CTX> listener, @Nullable CTX context) {
-    if (html == null) { return ""; }
+  public <CTX> String sanitize(@Nullable String html,
+		  						@Nullable HtmlChangeListener<CTX> listener, 
+		  						@Nullable CTX context) {
+    if (html == null) 
+    	return "";
+    
     StringBuilder out = new StringBuilder(html.length());
-    HtmlSanitizer.sanitize(
-        html,
-        apply(
-            HtmlStreamRenderer.create(out, Handler.DO_NOTHING),
-            listener,
-            context),
-        preprocessor);
+    
+    HtmlStreamRenderer htmlStreamRenderer = HtmlStreamRenderer
+    											.create(out, Handler.DO_NOTHING)
+    											.setCharReplacements(charReplacements);
+    
+	Policy policy = apply(htmlStreamRenderer, listener, context);
+	
+	HtmlSanitizer.sanitize(html, policy, preprocessor);
+	
     return out.toString();
   }
 

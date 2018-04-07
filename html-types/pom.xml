@@ -1,14 +1,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+  <groupId>lt.hrm.owasp-java-html-sanitizer</groupId>
   <artifactId>html-types</artifactId>
   <version>20180219.2-SNAPSHOT</version>
   <packaging>jar</packaging>
   <parent>
     <relativePath>../parent</relativePath>
-    <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+    <groupId>lt.hrm.owasp-java-html-sanitizer</groupId>
     <artifactId>parent</artifactId>
-    <version>20180219.2-SNAPSHOT</version>
+    <version>20180407.2-SNAPSHOT</version>
   </parent>
 
   <name>OWASP Java HTML Sanitizer Safe HTML Compatibility</name>

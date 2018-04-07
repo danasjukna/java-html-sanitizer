@@ -217,7 +217,7 @@ public final class EncodingTest extends TestCase {
          sb.toString());
 
     StringBuilder out = new StringBuilder();
-    Encoding.encodeHtmlAttribOnto(cps.toString(), out);
+    Encoding.encodeHtmlAttribOnto(cps.toString(), out, CharReplacements.DEFAULT);
     assertEquals(
         " \t \n &#64; \u0080 \u00ff \u0100 \u0fff \u1000 "
         + "\u123a  &#x10000; &#x10ffff; ",
@@ -228,13 +228,15 @@ public final class EncodingTest extends TestCase {
   public static final void testAngularJsBracesInTextNode() throws Exception {
     StringBuilder sb = new StringBuilder();
 
-    Encoding.encodePcdataOnto("{{angularVariable}}", sb);
+    CharReplacements charReplacements = new CharReplacements(CharReplacements.DEFAULT);
+    
+	Encoding.encodePcdataOnto("{{angularVariable}}", sb, charReplacements);
     assertEquals("{<!-- -->{angularVariable}}", sb.toString());
 
     sb.setLength(0);
 
-    Encoding.encodePcdataOnto("{", sb);
-    Encoding.encodePcdataOnto("{angularVariable}}", sb);
+    Encoding.encodePcdataOnto("{", sb, charReplacements);
+    Encoding.encodePcdataOnto("{angularVariable}}", sb, charReplacements);
     assertEquals("{<!-- -->{angularVariable}}", sb.toString());
   }
 
@@ -282,15 +284,15 @@ public final class EncodingTest extends TestCase {
     // signs to prevent text nodes or attribute values from introducing an
     // attribute with a value.
     StringBuilder pcdata = new StringBuilder();
-    Encoding.encodePcdataOnto("\" nonce=xyz", pcdata);
+    Encoding.encodePcdataOnto("\" nonce=xyz", pcdata, CharReplacements.DEFAULT);
     assertEquals("&#34; nonce&#61;xyz", pcdata.toString());
 
     StringBuilder rcdata = new StringBuilder();
-    Encoding.encodeRcdataOnto("\" nonce=xyz", rcdata);
+    Encoding.encodeRcdataOnto("\" nonce=xyz", rcdata, CharReplacements.DEFAULT);
     assertEquals("&#34; nonce&#61;xyz", rcdata.toString());
 
     StringBuilder attrib = new StringBuilder();
-    Encoding.encodeHtmlAttribOnto("a nonce=xyz ", attrib);
+    Encoding.encodeHtmlAttribOnto("a nonce=xyz ", attrib, CharReplacements.DEFAULT);
     assertEquals("a nonce&#61;xyz ", attrib.toString());
   }
 }

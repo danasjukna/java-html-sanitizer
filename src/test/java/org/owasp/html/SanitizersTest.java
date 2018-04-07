@@ -433,6 +433,30 @@ public class SanitizersTest extends TestCase {
         + "</tbody></table>",
         pf.sanitize(input));
   }
+  
+  @Test
+  public static final void testSkipEncodingOfCertainChars() {
+    PolicyFactory s = new HtmlPolicyBuilder()
+        .allowStandardUrlProtocols()
+        .allowElements("a")
+        .allowAttributes("href").onElements("a")
+        .toFactory()
+        .setCharReplacements(CharReplacements.DEFAULT.clone().dontReplace('@'));
+
+    String unsafe = "<a href=\"mailto:jonas@example.com  \">text</a>";
+    String safe = "<a href=\"mailto:jonas@example.com\">text</a>";
+
+    String sanitized = s.sanitize(unsafe);
+
+    assertEquals(safe, sanitized);
+    
+    s.setCharReplacements(CharReplacements.DEFAULT);
+    String supersafe = "<a href=\"mailto:jonas&#64;example.com\">text</a>";
+    
+    sanitized = s.sanitize(unsafe);
+
+    assertEquals(supersafe, sanitized);
+  }
 
   static int fac(int n) {
     int ifac = 1;

@@ -151,29 +151,26 @@ final class Encoding {
     return -1;
   }
 
-  static void encodeHtmlAttribOnto(String plainText, Appendable output)
-      throws IOException {
-    encodeHtmlOnto(plainText, output, "{\u200B");
+  static void encodeHtmlAttribOnto(String plainText, Appendable output, CharReplacements charReplacements) throws IOException {
+    encodeHtmlOnto(plainText, output, charReplacements, false);
   }
 
-  static void encodePcdataOnto(String plainText, Appendable output)
-      throws IOException {
+  static void encodePcdataOnto(String plainText, Appendable output, CharReplacements charReplacements) throws IOException {
     // Avoid problems with client-side template languages like
     // Angular & Polymer which attach special significance to text like
     // {{...}}.
     // We split brackets so that these template languages don't end up
     // executing expressions in sanitized text.
-    encodeHtmlOnto(plainText, output, "{<!-- -->");
+    encodeHtmlOnto(plainText, output, charReplacements, true);
   }
 
-  static void encodeRcdataOnto(String plainText, Appendable output)
-      throws IOException {
+  static void encodeRcdataOnto(String plainText, Appendable output, CharReplacements charReplacements) throws IOException {
     // Avoid problems with client-side template languages like
     // Angular & Polymer which attach special significance to text like
     // {{...}}.
     // We split brackets so that these template languages don't end up
     // executing expressions in sanitized text.
-    encodeHtmlOnto(plainText, output, "{\u200B");
+    encodeHtmlOnto(plainText, output, charReplacements, false);
   }
 
   /**
@@ -185,25 +182,23 @@ final class Encoding {
    * @see <a href="http://www.w3.org/TR/2008/REC-xml-20081126/#charsets">XML Ch. 2.2 - Characters</a>
    */
   @TCB
-  private static void encodeHtmlOnto(
-      String plainText, Appendable output, @Nullable String braceReplacement)
-          throws IOException {
+  private static void encodeHtmlOnto(String plainText, Appendable output, CharReplacements charReplacements, boolean isInPlainTextMode)throws IOException {
     int n = plainText.length();
     int pos = 0;
     for (int i = 0; i < n; ++i) {
       char ch = plainText.charAt(i);
-      if (ch < REPLACEMENTS.length) {  // Handles all ASCII.
-        String repl = REPLACEMENTS[ch];
-        if (ch == '{' && repl == null) {
-          if (i + 1 == n || plainText.charAt(i + 1) == '{') {
-            repl = braceReplacement;
-          }
-        }
+      
+      if (charReplacements.hasReplacementForChar(ch)) {  // Handles all ASCII.
+        String repl = charReplacements.getReplacementForChar(ch, plainText, i, n, isInPlainTextMode);
         if (repl != null) {
-          output.append(plainText, pos, i).append(repl);
+          output
+          	.append(plainText, pos, i)
+          	.append(repl);
           pos = i + 1;
         }
-      } else if ((0x93A <= ch && ch <= 0xC4C)
+      } 
+      else 
+      if ((0x93A <= ch && ch <= 0xC4C)
           && (
               // Devanagari vowel
               ch <= 0x94F
@@ -231,7 +226,9 @@ final class Encoding {
             // Drop the ZWNJ on the floor.
             pos = i;
           }
-        } else if (output instanceof StringBuilder) {
+        } 
+        else 
+        if (output instanceof StringBuilder) {
           StringBuilder sb = (StringBuilder) output;
           int len = sb.length();
           if (len != 0) {
@@ -240,7 +237,9 @@ final class Encoding {
             }
           }
         }
-      } else if (((char) 0xd800) <= ch) {
+      } 
+      else 
+      if (((char) 0xd800) <= ch) {
         if (ch <= ((char) 0xdfff)) {
           char next;
           if (i + 1 < n
@@ -277,7 +276,9 @@ final class Encoding {
             appendNumericEntity(ch, output);
           }
         }
-      } else if (ch == '\u1FEF') {  // Normalizes to backtick.
+      } 
+      else 
+      if (ch == '\u1FEF') {  // Normalizes to backtick.
         output.append(plainText, pos, i).append("&#8175;");
         pos = i + 1;
       }
@@ -316,31 +317,6 @@ final class Encoding {
    '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
   };
 
-  /** Maps ASCII chars that need to be encoded to an equivalent HTML entity. */
-  static final String[] REPLACEMENTS = new String[0x80];
-  static {
-    for (int i = 0; i < ' '; ++i) {
-      // We elide control characters so that we can ensure that our output is
-      // in the intersection of valid HTML5 and XML.  According to
-      // http://www.w3.org/TR/2008/REC-xml-20081126/#charsets
-      // Char      ::=          #x9 | #xA | #xD | [#x20-#xD7FF]
-      //             |          [#xE000-#xFFFD] | [#x10000-#x10FFFF]
-      if (i != '\t' && i != '\n' && i != '\r') {
-        REPLACEMENTS[i] = "";  // Elide
-      }
-    }
-    // "&#34;" is shorter than "&quot;"
-    REPLACEMENTS['"']  = "&#" + ((int) '"')  + ";";  // Attribute delimiter.
-    REPLACEMENTS['&']  = "&amp;";                    // HTML special.
-    // We don't use &apos; since that is not in the intersection of HTML&XML.
-    REPLACEMENTS['\''] = "&#" + ((int) '\'') + ";";  // Attribute delimiter.
-    REPLACEMENTS['+']  = "&#" + ((int) '+')  + ";";  // UTF-7 special.
-    REPLACEMENTS['<']  = "&lt;";                     // HTML special.
-    REPLACEMENTS['=']  = "&#" + ((int) '=')  + ";";  // Special in attributes.
-    REPLACEMENTS['>']  = "&gt;";                     // HTML special.
-    REPLACEMENTS['@']  = "&#" + ((int) '@')  + ";";  // Conditional compilation.
-    REPLACEMENTS['`']  = "&#" + ((int) '`')  + ";";  // Attribute delimiter.
-  }
 
   /**
    * {@code DECODES_TO_SELF[c]} is true iff the codepoint c decodes to itself in
