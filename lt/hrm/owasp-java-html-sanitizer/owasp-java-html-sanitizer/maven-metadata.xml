@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>lt.hrm.owasp-java-html-sanitizer</groupId>
+  <artifactId>owasp-java-html-sanitizer</artifactId>
+  <versioning>
+    <versions>
+      <version>20180407.2-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20180408091627</lastUpdated>
+  </versioning>
+</metadata>
