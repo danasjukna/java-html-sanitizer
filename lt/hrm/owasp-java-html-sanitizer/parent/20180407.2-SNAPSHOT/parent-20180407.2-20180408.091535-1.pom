@@ -194,5 +194,16 @@ application while protecting against XSS.
         </plugins>
       </build>
     </profile>
+
+        <profile>
+            <id>all</id>
+            <modules>
+                <module>../../java-html-sanitizer</module>
+            </modules>
+            <activation>
+               <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+
   </profiles>
 </project>
